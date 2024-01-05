@@ -1,0 +1,47 @@
+import argparse
+# Create the parser
+parser = argparse.ArgumentParser()
+# Add an argument
+parser.add_argument('--name', type=str, required=True)
+# Parse the argument
+args = parser.parse_args()
+# Print "Hello" + the user input argument
+print('Hello,', args.name)
+
+
+
+import requests
+import matplotlib.pyplot as plt
+
+# searching GitHub repositories
+api_url = "https://api.github.com/search/repositories"
+
+# Parameters for the search query
+params = {
+    'q': 'stars:>1',   # Get repositories with more than 1 star
+    'sort': 'stars',   # Sort by stars
+    'order': 'desc',   # Order in descending order
+}
+
+# Make a GET request to the GitHub API
+response = requests.get(api_url, params=params)
+
+# Parse response
+repositories = response.json()['items'][:5]  # Get the top 5 repositories
+
+# Extract repository names and number of stars
+repo_names = [repo['full_name'] for repo in repositories]
+star_counts = [repo['stargazers_count'] for repo in repositories]
+
+# Print repository names and star counts
+print("Top 5 Starred Repositories:")
+for name, stars in zip(repo_names, star_counts):
+        print(f"{name}: {stars} stars")
+
+# Visualize data in a bar chart
+plt.bar(repo_names, star_counts, color='blue')
+plt.title("Top 5 Starred GitHub Repositories")
+plt.xlabel("Repository")
+plt.ylabel("Star Count")
+plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
+plt.show()
