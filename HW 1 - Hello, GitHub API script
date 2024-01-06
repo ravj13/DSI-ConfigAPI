@@ -9,17 +9,12 @@ args = parser.parse_args()
 print('Hello,', args.name)
 
 
-# GitHub API code + error handling
+# GitHub API code 
 
 import requests
-import logging
 import matplotlib.pyplot as plt
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# searching GitHub repositories
+# GitHub API endpoint for searching repositories
 api_url = "https://api.github.com/search/repositories"
 
 # Parameters for the search query
@@ -32,33 +27,93 @@ params = {
 # Make a GET request to the GitHub API
 response = requests.get(api_url, params=params)
 
-# Check if request was successful (status code 200)
-response.raise_for_status()
+# Check if the request was successful (status code 200)
+if response.status_code == 200:
+    # Parse the JSON response
+    repositories = response.json()['items'][:5]  # Get the top 5 repositories
 
-# Parse response
-repositories = response.json()['items'][:5]  # Get the top 5 repositories
+    # Extract repository names and star counts
+    repo_names = [repo['full_name'] for repo in repositories]
+    star_counts = [repo['stargazers_count'] for repo in repositories]
 
-# Extract repository names and number of stars
-repo_names = [repo['full_name'] for repo in repositories]
-star_counts = [repo['stargazers_count'] for repo in repositories]
+    # Print repository names and star counts
+    print("Top 5 Starred Repositories:")
+    for name, stars in zip(repo_names, star_counts):
+        print(f"{name}: {stars} stars")
 
-# Print repository names and star counts
-        logger.info("Top 5 Starred Repositories:")
-        for name, stars in zip(repo_names, star_counts):
-            logger.info(f"{name}: {stars} stars")
+    # Visualize data in a bar chart
+    plt.bar(repo_names, star_counts, color='purple')
+    plt.title("Top 5 Starred GitHub Repositories")
+    plt.xlabel("Repository")
+    plt.ylabel("Star Count")
+    plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
+    plt.show()
 
-# Visualize data in a bar chart
-plt.bar(repo_names, star_counts, color='blue')
-plt.title("Top 5 Starred GitHub Repositories")
-plt.xlabel("Repository")
-plt.ylabel("Star Count")
-plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
-plt.show()
+else:
+    # Print an error message if the request was not successful
+    print(f"Error: Unable to retrieve data. Status code: {response.status_code}")
+
+# GitHub API code + logging and error handling
+
+import requests
+import logging
+import matplotlib.pyplot as plt
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# GitHub API endpoint for searching repositories
+api_url = "https://api.github.com/search/repositories"
+
+# Parameters for the search query
+params = {
+    'q': 'stars:>1',   # Get repositories with more than 1 star
+    'sort': 'stars',   # Sort by stars
+    'order': 'desc',   # Order in descending order
+}
+
+try:
+    # Make a GET request to the GitHub API
+    response = requests.get(api_url, params=params)
+    
+    # Check if the request was successful (status code 200)
+    response.raise_for_status()
+
+    # Parse the JSON response
+    repositories = response.json().get('items', [])[:5]  # Get the top 5 repositories
+
+    # Extract repository names and star counts
+    repo_names = [repo['full_name'] for repo in repositories]
+    star_counts = [repo['stargazers_count'] for repo in repositories]
+
+    # Print repository names and star counts
+    logger.info("Top 5 Starred Repositories:")
+    for name, stars in zip(repo_names, star_counts):
+        logger.info(f"{name}: {stars} stars")
+
+    # Visualize data in a bar chart
+    plt.bar(repo_names, star_counts, color='purple')
+    plt.title("Top 5 Starred GitHub Repositories")
+    plt.xlabel("Repository")
+    plt.ylabel("Star Count")
+    plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
+    plt.show()
 
 except requests.exceptions.RequestException as req_err:
-        logger.error(f"Error making GitHub API request: {req_err}")
+    logger.error(f"Error making GitHub API request: {req_err}")
+    logger.debug(f"Request parameters: {params}")
+
+except requests.exceptions.HTTPError as http_err:
+    logger.error(f"HTTP Error occurred: {http_err}")
+    logger.debug(f"Response content: {response.content}")
+
 except ValueError as val_err:
-        logger.error(f"Input validation error: {val_err}")
+    logger.error(f"Error parsing JSON response: {val_err}")
+    logger.debug(f"Response content: {response.content}")
+
+except Exception as e:
+    logger.exception(f"An unexpected error occurred: {e}")
 
 
 
